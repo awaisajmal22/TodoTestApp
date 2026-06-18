@@ -8,6 +8,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:todoapp/app.dart';
+import 'package:todoapp/features/auth/data/repositories/in_memory_auth_repository.dart';
 import 'package:todoapp/features/todos/data/repositories/in_memory_todo_repository.dart';
 import 'package:todoapp/features/todos/domain/usecases/add_todo.dart';
 import 'package:todoapp/features/todos/domain/usecases/delete_todo.dart';
@@ -20,6 +21,7 @@ void main() {
 
     await tester.pumpWidget(
       TodoApp(
+        authRepository: InMemoryAuthRepository(),
         syncLabel: 'Local preview mode',
         watchTodos: WatchTodos(repository),
         addTodo: AddTodo(repository),

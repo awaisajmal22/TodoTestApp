@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../app.dart';
+import '../../../auth/presentation/cubit/auth_cubit.dart';
 import '../../domain/entities/todo_item.dart';
 import '../bloc/todos_bloc.dart';
 
@@ -88,55 +90,100 @@ class _TodoHomePageState extends State<TodoHomePage> {
               SafeArea(
                 child: BlocBuilder<TodosBloc, TodosState>(
                   builder: (context, state) {
-                    return CustomScrollView(
-                      physics: const BouncingScrollPhysics(),
-                      slivers: [
-                        SliverPadding(
-                          padding: const EdgeInsets.fromLTRB(20, 14, 20, 14),
-                          sliver: SliverToBoxAdapter(
-                            child: _Header(
-                              syncLabel: widget.syncLabel,
-                              state: state,
+                    return LayoutBuilder(
+                      builder: (context, constraints) {
+                        final layout = _ResponsiveLayout.fromWidth(
+                          constraints.maxWidth,
+                        );
+                        return Center(
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                              maxWidth: layout.contentMaxWidth,
                             ),
-                          ),
-                        ),
-                        SliverPadding(
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
-                          sliver: SliverToBoxAdapter(
-                            child: _StatsRow(state: state),
-                          ),
-                        ),
-                        SliverPadding(
-                          padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
-                          sliver: SliverToBoxAdapter(
-                            child: _Composer(
-                              controller: _controller,
-                              focusNode: _focusNode,
-                              onAdd: _submitTodo,
-                            ),
-                          ),
-                        ),
-                        SliverPadding(
-                          padding: const EdgeInsets.fromLTRB(20, 0, 20, 14),
-                          sliver: SliverToBoxAdapter(
-                            child: _FilterBar(state: state),
-                          ),
-                        ),
-                        SliverPadding(
-                          padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-                          sliver: SliverToBoxAdapter(
-                            child: AnimatedSwitcher(
-                              duration: const Duration(milliseconds: 280),
-                              child: state.visibleTodos.isEmpty
-                                  ? const _EmptyState(key: ValueKey('empty'))
-                                  : _TodoList(
-                                      key: const ValueKey('todo-list'),
-                                      todos: state.visibleTodos,
+                            child: CustomScrollView(
+                              physics: const BouncingScrollPhysics(),
+                              slivers: [
+                                SliverPadding(
+                                  padding: EdgeInsets.fromLTRB(
+                                    layout.horizontalPadding,
+                                    layout.topPadding,
+                                    layout.horizontalPadding,
+                                    14,
+                                  ),
+                                  sliver: SliverToBoxAdapter(
+                                    child: _Header(
+                                      syncLabel: widget.syncLabel,
+                                      state: state,
+                                      isCompact: layout.isCompact,
                                     ),
+                                  ),
+                                ),
+                                SliverPadding(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: layout.horizontalPadding,
+                                  ),
+                                  sliver: SliverToBoxAdapter(
+                                    child: _StatsRow(
+                                      state: state,
+                                      isCompact: layout.isCompact,
+                                    ),
+                                  ),
+                                ),
+                                SliverPadding(
+                                  padding: EdgeInsets.fromLTRB(
+                                    layout.horizontalPadding,
+                                    20,
+                                    layout.horizontalPadding,
+                                    12,
+                                  ),
+                                  sliver: SliverToBoxAdapter(
+                                    child: _Composer(
+                                      controller: _controller,
+                                      focusNode: _focusNode,
+                                      onAdd: _submitTodo,
+                                      isCompact: layout.isCompact,
+                                    ),
+                                  ),
+                                ),
+                                SliverPadding(
+                                  padding: EdgeInsets.fromLTRB(
+                                    layout.horizontalPadding,
+                                    0,
+                                    layout.horizontalPadding,
+                                    14,
+                                  ),
+                                  sliver: SliverToBoxAdapter(
+                                    child: _FilterBar(state: state),
+                                  ),
+                                ),
+                                SliverPadding(
+                                  padding: EdgeInsets.fromLTRB(
+                                    layout.horizontalPadding,
+                                    0,
+                                    layout.horizontalPadding,
+                                    24,
+                                  ),
+                                  sliver: SliverToBoxAdapter(
+                                    child: AnimatedSwitcher(
+                                      duration: const Duration(
+                                        milliseconds: 280,
+                                      ),
+                                      child: state.visibleTodos.isEmpty
+                                          ? const _EmptyState(
+                                              key: ValueKey('empty'),
+                                            )
+                                          : _TodoList(
+                                              key: const ValueKey('todo-list'),
+                                              todos: state.visibleTodos,
+                                            ),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ),
-                      ],
+                        );
+                      },
                     );
                   },
                 ),
@@ -149,11 +196,55 @@ class _TodoHomePageState extends State<TodoHomePage> {
   }
 }
 
+class _ResponsiveLayout {
+  const _ResponsiveLayout({
+    required this.isCompact,
+    required this.contentMaxWidth,
+    required this.horizontalPadding,
+    required this.topPadding,
+  });
+
+  final bool isCompact;
+  final double contentMaxWidth;
+  final double horizontalPadding;
+  final double topPadding;
+
+  factory _ResponsiveLayout.fromWidth(double width) {
+    if (width < 600) {
+      return const _ResponsiveLayout(
+        isCompact: true,
+        contentMaxWidth: 560,
+        horizontalPadding: 16,
+        topPadding: 8,
+      );
+    }
+    if (width < 1024) {
+      return const _ResponsiveLayout(
+        isCompact: false,
+        contentMaxWidth: 860,
+        horizontalPadding: 24,
+        topPadding: 12,
+      );
+    }
+    return const _ResponsiveLayout(
+      isCompact: false,
+      contentMaxWidth: 1120,
+      horizontalPadding: 32,
+      topPadding: 18,
+    );
+  }
+}
+
 class _Header extends StatelessWidget {
-  const _Header({required this.syncLabel, required this.state});
+  const _Header({
+    required this.syncLabel,
+    required this.state,
+    required this.isCompact,
+  });
 
   final String syncLabel;
   final TodosState state;
+  final bool isCompact;
 
   @override
   Widget build(BuildContext context) {
@@ -199,6 +290,40 @@ class _Header extends StatelessWidget {
                 ],
               ),
             ),
+            PopupMenuButton<_HeaderAction>(
+              tooltip: 'Account options',
+              icon: const Icon(Icons.more_vert_rounded),
+              onSelected: (action) async {
+                switch (action) {
+                  case _HeaderAction.profile:
+                    Navigator.of(context).pushNamed(AppRoutes.profile);
+                    break;
+                  case _HeaderAction.logout:
+                    await context.read<AuthCubit>().signOut();
+                    break;
+                }
+              },
+              itemBuilder: (context) => const [
+                PopupMenuItem<_HeaderAction>(
+                  value: _HeaderAction.profile,
+                  child: ListTile(
+                    dense: true,
+                    contentPadding: EdgeInsets.zero,
+                    leading: Icon(Icons.person_outline_rounded),
+                    title: Text('Profile'),
+                  ),
+                ),
+                PopupMenuItem<_HeaderAction>(
+                  value: _HeaderAction.logout,
+                  child: ListTile(
+                    dense: true,
+                    contentPadding: EdgeInsets.zero,
+                    leading: Icon(Icons.logout_rounded),
+                    title: Text('Logout'),
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
         const SizedBox(height: 16),
@@ -215,13 +340,36 @@ class _Header extends StatelessWidget {
   }
 }
 
+enum _HeaderAction { profile, logout }
+
 class _StatsRow extends StatelessWidget {
-  const _StatsRow({required this.state});
+  const _StatsRow({required this.state, required this.isCompact});
 
   final TodosState state;
+  final bool isCompact;
 
   @override
   Widget build(BuildContext context) {
+    if (isCompact) {
+      return Column(
+        children: [
+          _StatCard(
+            label: 'Total',
+            value: state.totalCount.toString(),
+            icon: Icons.view_list_rounded,
+            tint: const Color(0xFF2457FF),
+          ),
+          const SizedBox(height: 12),
+          _StatCard(
+            label: 'Done',
+            value: state.completedCount.toString(),
+            icon: Icons.check_circle_rounded,
+            tint: const Color(0xFF18A566),
+          ),
+        ],
+      );
+    }
+
     return Row(
       children: [
         Expanded(
@@ -304,11 +452,13 @@ class _Composer extends StatelessWidget {
     required this.controller,
     required this.focusNode,
     required this.onAdd,
+    required this.isCompact,
   });
 
   final TextEditingController controller;
   final FocusNode focusNode;
   final VoidCallback onAdd;
+  final bool isCompact;
 
   @override
   Widget build(BuildContext context) {
@@ -334,37 +484,81 @@ class _Composer extends StatelessWidget {
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: 12),
-          TextField(
-            controller: controller,
-            focusNode: focusNode,
-            textInputAction: TextInputAction.done,
-            onSubmitted: (_) => onAdd(),
-            decoration: InputDecoration(
-              hintText: 'Write a todo you actually want to finish',
-              filled: true,
-              fillColor: const Color(0xFFF4F7FF),
-              prefixIcon: const Icon(Icons.edit_note_rounded),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(18),
-                borderSide: BorderSide.none,
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.icon(
-              onPressed: onAdd,
-              icon: const Icon(Icons.add_rounded),
-              label: const Text('Add todo'),
-              style: FilledButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(18),
+          if (isCompact)
+            Column(
+              children: [
+                TextField(
+                  controller: controller,
+                  focusNode: focusNode,
+                  textInputAction: TextInputAction.done,
+                  onSubmitted: (_) => onAdd(),
+                  decoration: InputDecoration(
+                    hintText: 'Write a todo you actually want to finish',
+                    filled: true,
+                    fillColor: const Color(0xFFF4F7FF),
+                    prefixIcon: const Icon(Icons.edit_note_rounded),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(18),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
                 ),
-              ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: onAdd,
+                    icon: const Icon(Icons.add_rounded),
+                    label: const Text('Add todo'),
+                    style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            )
+          else
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: controller,
+                    focusNode: focusNode,
+                    textInputAction: TextInputAction.done,
+                    onSubmitted: (_) => onAdd(),
+                    decoration: InputDecoration(
+                      hintText: 'Write a todo you actually want to finish',
+                      filled: true,
+                      fillColor: const Color(0xFFF4F7FF),
+                      prefixIcon: const Icon(Icons.edit_note_rounded),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(18),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                SizedBox(
+                  height: 56,
+                  child: FilledButton.icon(
+                    onPressed: onAdd,
+                    icon: const Icon(Icons.add_rounded),
+                    label: const Text('Add todo'),
+                    style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ),
         ],
       ),
     );
@@ -384,22 +578,19 @@ class _FilterBar extends StatelessWidget {
       TodoFilter.completed: 'Done',
     };
 
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: [
-          for (final entry in filters.entries) ...[
-            _FilterChip(
-              label: entry.value,
-              selected: state.filter == entry.key,
-              onSelected: () {
-                context.read<TodosBloc>().add(TodosFilterChanged(entry.key));
-              },
-            ),
-            const SizedBox(width: 10),
-          ],
-        ],
-      ),
+    return Wrap(
+      spacing: 10,
+      runSpacing: 10,
+      children: [
+        for (final entry in filters.entries)
+          _FilterChip(
+            label: entry.value,
+            selected: state.filter == entry.key,
+            onSelected: () {
+              context.read<TodosBloc>().add(TodosFilterChanged(entry.key));
+            },
+          ),
+      ],
     );
   }
 }
@@ -442,13 +633,39 @@ class _TodoList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        for (final todo in todos) ...[
-          _TodoTile(todo: todo),
-          const SizedBox(height: 12),
-        ],
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final crossAxisCount = constraints.maxWidth >= 1000
+            ? 2
+            : constraints.maxWidth >= 700
+            ? 2
+            : 1;
+        final itemHeight = crossAxisCount == 1 ? 96.0 : 112.0;
+
+        if (crossAxisCount == 1) {
+          return Column(
+            children: [
+              for (final todo in todos) ...[
+                _TodoTile(todo: todo),
+                const SizedBox(height: 12),
+              ],
+            ],
+          );
+        }
+
+        return GridView.builder(
+          itemCount: todos.length,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+            mainAxisExtent: itemHeight,
+          ),
+          itemBuilder: (context, index) => _TodoTile(todo: todos[index]),
+        );
+      },
     );
   }
 }
